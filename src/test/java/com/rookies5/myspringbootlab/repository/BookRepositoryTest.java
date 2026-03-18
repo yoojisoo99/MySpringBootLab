@@ -1,13 +1,11 @@
 package com.rookies5.myspringbootlab.repository;
 
 import com.rookies5.myspringbootlab.entity.Book;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -18,69 +16,125 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
-@ActiveProfiles("prod")
+//@DataJpaTest
 public class BookRepositoryTest {
+
     @Autowired
-    BookRepository bookRepository;
+    private BookRepository bookRepository;
+
+    @Test
+    public void testCreateBook() {
+        // Given
+        Book book = new Book();
+        book.setTitle("스프링 부트 입문");
+        book.setAuthor("홍길동");
+        book.setIsbn("9788956746425");
+        book.setPublishDate(LocalDate.of(2023, 1, 15));
+        book.setPrice(30000);
+
+        // When
+        Book savedBook = bookRepository.save(book);
+
+        // Then
+        assertThat(savedBook.getId()).isNotNull();
+        assertThat(savedBook.getTitle()).isEqualTo("스프링 부트 입문");
+        assertThat(savedBook.getAuthor()).isEqualTo("홍길동");
+    }
+
+    @Test
+    public void testFindByIsbn() {
+        // Given
+        Book book = new Book();
+        book.setTitle("스프링 부트 입문");
+        book.setAuthor("홍길동");
+        book.setIsbn("9788956746425");
+        book.setPublishDate(LocalDate.of(2023, 1, 15));
+        book.setPrice(30000);
+
+        bookRepository.save(book);
+
+        // When
+        Optional<Book> foundBook = bookRepository.findByIsbn("9788956746425");
+
+        // Then
+        assertThat(foundBook).isPresent();
+        assertThat(foundBook.get().getTitle()).isEqualTo("스프링 부트 입문");
+    }
+
+    @Test
+    public void testFindByAuthor() {
+        // Given
+        Book book1 = new Book();
+        book1.setTitle("스프링 부트 입문");
+        book1.setAuthor("홍길동");
+        book1.setIsbn("9788956746425");
+        book1.setPublishDate(LocalDate.of(2023, 1, 15));
+        book1.setPrice(30000);
+
+        Book book2 = new Book();
+        book2.setTitle("JPA 프로그래밍");
+        book2.setAuthor("박둘리");
+        book2.setIsbn("9788956746432");
+        book2.setPublishDate(LocalDate.of(2024, 3, 24));
+        book2.setPrice(35000);
+
+        Book book3 = new Book();
+        book3.setTitle("스프링 클라우드");
+        book3.setAuthor("홍길동");
+        book3.setIsbn("9788956746407");
+        book3.setPublishDate(LocalDate.of(2024, 7, 8));
+        book3.setPrice(38000);
+
+//        bookRepository.save(book1);
+//        bookRepository.save(book2);
+//        bookRepository.save(book3);
+        bookRepository.saveAll(List.of(book1,book2,book3));
+
+        // When
+        List<Book> books = bookRepository.findByAuthor("홍길동");
+
+        // Then
+        assertThat(books).hasSize(2);
+        assertThat(books).extracting("title").contains("스프링 부트 입문","스프링 클라우드");
+    }
 
     @Test
     @Rollback(value = false)
-    @Disabled
-    void testCreateBook() {
+    public void testUpdateBook() {
+        // Given
         Book book = new Book();
-        book.setTitle("JPA 프로그래밍");
-        book.setAuthor("박둘리");
-        book.setIsbn("9788956746432");
-        book.setPrice(35000);
-        book.setPublishDate(LocalDate.of(2025,04,30));
-
+        book.setTitle("스프링 부트 입문1");
+        book.setAuthor("홍길동1");
+        book.setIsbn("9788956746426");
+        book.setPrice(30000);
         Book savedBook = bookRepository.save(book);
+
+        // When
+        savedBook.setPrice(32000);
+        //Book updatedBook = bookRepository.save(savedBook);
+
+        // Then
+        //assertThat(updatedBook.getPrice()).isEqualTo(32000);
+        assertThat(savedBook.getPrice()).isEqualTo(32000);
     }
 
     @Test
-    void testFindByIsbn() {
-        Optional<Book> optionalBook = bookRepository.findByIsbn("9788956746425");
-        if(optionalBook.isPresent()) {
-            Book book = optionalBook.get();
-            assertThat(book.getIsbn()).isEqualTo("9788956746425");
-        }else{
-            System.out.println("Book Not Found");
-        }
-    }
+    @Rollback(value = false)
+    public void testDeleteBook() {
+//        bookRepository.deleteAll();
 
-    @Test
-    void testFindByAuthor() {
-        List<Book> books = bookRepository.findByAuthor("홍길동");
-        if(!books.isEmpty()) {
-            // get()은 Optional의 메서드이므로, List에서는 get(0) 처럼 인덱스를 지정해야 합니다.
-            Book book = books.get(0);
-            assertThat(book.getAuthor()).isEqualTo("홍길동");
-        }else{
-            System.out.println("Book Not Found");
-        }
-    }
+        // Given
+        Book book = new Book();
+        book.setTitle("스프링 부트 입문");
+        book.setAuthor("홍길동");
+        book.setIsbn("9788956746425");
+        book.setPrice(30000);
+        Book savedBook = bookRepository.save(book);
 
-    @Test
-    void testUpdateBook() {
-        Book book = bookRepository.findByIsbn("9788956746425")
-                .orElseThrow(() -> new RuntimeException("Book Not Found"));
-        book.setAuthor("홍길동2");
-        bookRepository.save(book);
-        assertThat(book.getAuthor()).isEqualTo("홍길동2");
-    }
+        // When
+        bookRepository.deleteById(savedBook.getId());
 
-    @Test
-    @Disabled
-    void testDeleteBook() {
-        // 1. 해당 ISBN을 가진 책을 조회
-        Book book = bookRepository.findByIsbn("9788956746425")
-                .orElseThrow(() -> new RuntimeException("Book Not Found"));
-
-        // 2. 조회된 객체를 삭제
-        bookRepository.delete(book);
-
-        // 3. 다시 조회했을 때 결과가 비어있는지(Empty) 확인
-        Optional<Book> deletedBook = bookRepository.findByIsbn("9788956746425");
-        assertThat(deletedBook).isEmpty();
+        // Then
+        assertThat(bookRepository.findById(savedBook.getId())).isEmpty();
     }
 }

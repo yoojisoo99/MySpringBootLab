@@ -1,5 +1,6 @@
 package com.rookies5.myspringbootlab.runner;
 
+import com.rookies5.myspringbootlab.config.MyEnvironment;
 import com.rookies5.myspringbootlab.property.MyPropProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +14,17 @@ import java.util.function.Consumer;
 
 @Component
 public class MyPropRunner implements ApplicationRunner {
-    @Value("springboot")
+    @Value("${myprop.username}")
     private String username;
 
-    @Value("${random.int(1,100)}")
+    @Value("${myprop.port}")
     private int port;
-
 
     @Autowired
     private MyPropProperties properties;
+
+    @Autowired
+    private MyEnvironment myEnvironment;
 
     //Logger
     private Logger logger = LoggerFactory.getLogger(MyPropRunner.class);
@@ -29,10 +32,14 @@ public class MyPropRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         System.out.println("Logger 구현체 클래스명 = " + logger.getClass().getName());
-        logger.debug("MyBootProperties getName() = " + properties.getUsername());
 
-        logger.info("Name: "+ properties.getUsername());
-        logger.info("Property Age : " + properties.getPort());
+        logger.info("Property username: "+ username);
+        logger.info("Property port : " + port);
+
+        logger.debug("MyBootProperties getUsername() = " + properties.getUsername());
+        logger.debug("MyBootProperties getPort() = " + properties.getPort());
+
+        logger.info("MyEnvironment getMode :" + myEnvironment.getMode());
 
     }
 }
